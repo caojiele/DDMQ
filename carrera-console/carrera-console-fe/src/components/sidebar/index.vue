@@ -20,6 +20,7 @@
   &-inner {
     flex: 1 auto;
     overflow: auto;
+    position: relative;
   }
   &-title {
     cursor: pointer;
@@ -157,6 +158,22 @@
   margin-right: 5px;
 }
 
+.bcui-confirm {
+  .bcui-modal-body {
+    padding: 16px;
+  }
+  .bcui-modal-confirm-body {
+    padding-top: 8px;
+  }
+}
+
+.logout-button {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
 </style>
 <template>
   <div :class="classes">
@@ -199,12 +216,22 @@
                           </bc-menu-item>
         </bc-menu>
       </div>
+      <div class="bcui-menu-item logout-button" @click="confirmLogout">
+        <i class="icon bcui-icon-power-off prefix-icon"></i>
+        <span>Logout</span>
+      </div>
     </div>
   </div>
 </template>
 <script>
+  import loginMixins from '../../mixins/apis/login.js';
+  import { login } from '../../utils'
+
+  const { getToken, removeToken } = login;
+
   export default {
     name: 'sidebar',
+    mixins: [loginMixins],
     components: {},
     props: {},
     data () {
@@ -229,6 +256,29 @@
         this.$router.push({
           name: 'topics'
         });
+      },
+      confirmLogout () {
+        this.$modal.confirm({
+          title: 'Logout',
+          content: '<p>Are you sure to logout?</p>',
+          showCancel: true,
+          okText: 'Confirm',
+          cancelText: 'Cancel',
+          onOk: this.gotoLogin,
+          onCancel: () => {}
+        });
+      },
+      gotoLogin () {
+        this.requestPostLogout({
+          params: {
+            username: getToken()
+          }
+        }).then(() => {
+          removeToken();
+          this.$router.push({
+            name: 'login'
+          });
+        })
       }
     },
 

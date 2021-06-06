@@ -1,10 +1,34 @@
 import axios from 'axios';
+import router from '../router';
+import message from '../ui-core/components/message'
+
+let notified = false;
 
 const http = axios.create({
   headers: {
     'X-Requested-With': 'XMLHttpRequest'
-  }
+  },
+  withCredentials: true
 });
+
+http.interceptors.response.use(function (response) {
+  notified = false;
+  return response;
+}, function (error) {
+  authorizeHandle(error);
+  return Promise.reject(error);
+});
+
+function authorizeHandle ({ response }) {
+  const { status } = response;
+  if (status === 401) {
+    if (!notified) message.info('Not logging');
+    router.push({
+      name: 'login'
+    })
+    notified = true;
+  }
+}
 
 export default function request (method, path, options, flags = { enable: true }) {
   this.$notice.config({
@@ -48,7 +72,7 @@ export default function request (method, path, options, flags = { enable: true }
       this[noticeType].error({
         title: flags.failTitle,
         duration: 0,
-        desc: `Error code: ${body.errno} \n ErrorMessage: ${message}`,
+        desc: `Error code: ${body.errno} \n ErrorMessage: ${message}`
       });
       throw new Error(body.errmsg);
     } else {

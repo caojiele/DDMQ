@@ -8,7 +8,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const baseConfig = require('./webpack.base.config');
 
 const HOST = 'localhost';
-const PORT = 8080;
+const PORT = 8085;
 
 module.exports = merge(baseConfig, {
   mode: 'development',
@@ -29,7 +29,7 @@ module.exports = merge(baseConfig, {
     },
     proxy: {
       '/carrera/api': {
-        target: 'http://xxxxx ',
+        target: 'http://xxx/',
         changeOrigin: true,
         secure: false
       }

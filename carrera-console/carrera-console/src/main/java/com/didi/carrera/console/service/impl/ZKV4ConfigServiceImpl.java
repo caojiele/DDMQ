@@ -37,6 +37,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
@@ -98,6 +99,24 @@ public class ZKV4ConfigServiceImpl implements ZKV4ConfigService {
         Map<Long, Cluster> clusterMap = Maps.newHashMap();
         clusterService.findAll().forEach(cluster -> clusterMap.put(cluster.getId(), cluster));
         return clusterMap;
+    }
+
+//    @PostConstruct
+    public void initZkData() {
+        LOGGER.info("start initZkData");
+
+        List<String> children = zkService.getChildren("/");
+        if (CollectionUtils.isNotEmpty(children) && children.contains("carrera")) {
+            LOGGER.info("already inited, skip.");
+            return;
+        }
+
+        try {
+            initAllZk();
+            initZkPath();
+        } catch (Exception e) {
+            LOGGER.error("failed to init zk on cluster init, possible zk not startup.", e);
+        }
     }
 
     @Override
@@ -507,6 +526,13 @@ public class ZKV4ConfigServiceImpl implements ZKV4ConfigService {
             groupConfig.setAsyncThreads(config.getAsyncThreads());
             groupConfig.setRedisConfig(config.getRedisConfig());
         }
+
+        if (MapUtils.isNotEmpty(group.getGroupExtraParams())) {
+            if (group.getGroupExtraParams().containsKey("asyncThreads")) {
+                groupConfig.setAsyncThreads(Integer.parseInt(group.getGroupExtraParams().get("asyncThreads")));
+            }
+        }
+
         groupConfig.setAlarmGroup(group.getGroupAlarmGroup());
         groupConfig.setEnableAlarm(IsEnable.isEnable(group.getAlarmIsEnable()));
         groupConfig.setDelayTimeThreshold(group.getAlarmDelayTime());
@@ -595,6 +621,7 @@ public class ZKV4ConfigServiceImpl implements ZKV4ConfigService {
         upstreamTopic.setEnabled(subscription.getState() == IsEnable.ENABLE.getIndex());
 
         upstreamTopic.setMaxPullBatchSize(subscription.getConsumeSubscriptionConfig().getMaxPullBatchSize());
+
         upstreamTopic.setFetchThreads(subscription.getConsumeSubscriptionConfig().getFetchThreads());
         upstreamTopic.setMaxConsumeLag(subscription.getConsumeSubscriptionConfig().getMaxConsumeLag());
 
@@ -676,6 +703,15 @@ public class ZKV4ConfigServiceImpl implements ZKV4ConfigService {
                 upstreamTopic.getActions().add(0, Actions.ASYNC);
             }
             //skip
+        }
+
+        if (MapUtils.isNotEmpty(subscription.getSubExtraParams())) {
+            if (subscription.getSubExtraParams().containsKey("maxPullBatchSize")) {
+                upstreamTopic.setMaxPullBatchSize(Integer.parseInt(subscription.getSubExtraParams().get("maxPullBatchSize")));
+            }
+            if (subscription.getSubExtraParams().containsKey("concurrency")) {
+                upstreamTopic.setConcurrency(Integer.parseInt(subscription.getSubExtraParams().get("concurrency")));
+            }
         }
 
         return upstreamTopic;

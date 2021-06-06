@@ -23,6 +23,7 @@ import org.apache.rocketmq.remoting.exception.RemotingCommandException;
 public class DeleteTopicInNamesrvRequestHeader implements CommandCustomHeader {
     @CFNotNull
     private String topic;
+    private String brokerAddrs;
 
     @Override
     public void checkFields() throws RemotingCommandException {
@@ -34,5 +35,13 @@ public class DeleteTopicInNamesrvRequestHeader implements CommandCustomHeader {
 
     public void setTopic(String topic) {
         this.topic = topic;
+    }
+
+    public String getBrokerAddrs() {
+        return brokerAddrs;
+    }
+
+    public void setBrokerAddrs(String brokerAddrs) {
+        this.brokerAddrs = brokerAddrs;
     }
 }
